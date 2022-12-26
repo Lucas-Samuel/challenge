@@ -17,17 +17,22 @@ class BillingControllerTest extends TestCase
      */
     public function test_generate()
     {
+        Debt::create([
+            'name' => fake()->name(),
+            'government_id' => fake()->numerify('###########'),
+            'email' => fake()->email(),
+            'debt_amount' => fake()->randomFloat(2, 0, 10000),
+            'debt_due_date' => fake()->dateTimeBetween('now', '+5 days')->format('Y-m-d'),
+            'debt_id' => fake()->randomNumber()
+        ]);
+
         $response = $this->post('/api/billings/generate');
         $response->assertStatus(200);
     }
 
     public function test_notify()
     {
-        $debt = Debt::inRandomOrder()->first();
-
-        if (!$debt) {
-            return true;
-        }
+        $debt = Debt::query()->inRandomOrder()->first();
 
         $response = $this->json('POST', '/api/billings/notify', [
             'debtId'        => $debt->id,
@@ -42,10 +47,6 @@ class BillingControllerTest extends TestCase
     public function test_notify_already_paid()
     {
         $billing = Billing::where('status', Billing::PAID)->first();
-
-        if (!$billing) {
-            return true;
-        }
 
         $response = $this->json('POST', '/api/billings/notify', [
             'debtId'        => $billing->debt_id,

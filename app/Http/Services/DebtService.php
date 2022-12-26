@@ -18,4 +18,42 @@ class DebtService
             ->get();
     }
 
+    public function getDebtsFromCsv($filename, $delimiter = null)
+    {
+        if (!file_exists($filename) || !is_readable($filename)) {
+            return false;
+        }
+
+        $handle = fopen($filename, 'r');
+        if ($handle === false) {
+            return false;
+        }
+
+        if (!$delimiter) {
+            $delimiters = [';' => 0, ',' => 0, "\t" => 0, "|" => 0];
+            $firstLine = fgets($handle);
+            rewind($handle);
+
+            foreach ($delimiters as $delimiter => &$count) {
+                $count = count(str_getcsv($firstLine, $delimiter));
+            }
+
+            $delimiter = array_search(max($delimiters), $delimiters);
+        }
+
+        $data = [];
+        $header = null;
+        while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
+            if (!$header) {
+                $header = $row;
+            } else {
+                $data[] = array_combine($header, $row);
+            }
+        }
+
+        fclose($handle);
+        unlink($filename);
+
+        return $data;
+    }
 }

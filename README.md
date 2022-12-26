@@ -16,34 +16,40 @@ Acesse o diretório do projeto e execute o comando para construir as imagens do 
 $ cd challenge
 ```
 
-Inicie os contêineres do Docker:
+Monte os contêineres do Docker:
+
+```bash
+$ docker run --rm --interactive --tty -v $(pwd):/app composer install
+```
+
+Copie e configure as variavels de ambiente:
+
+```bash
+$ cp .env.example .env
+$ cp .env.example .env.testing
+```
+
+Inicie os contêineres:
 
 ```bash
 $ ./vendor/bin/sail up -d
 ```
 
-Acesse o contêiner do PHP:
-
-```bash
-$ ./vendor/bin/sail exec app bash
-```
-
-execute os comandos para instalar as dependências do Laravel e gere os arquivos de variáveis de ambiente:
-
-```bash
-$ composer install
-$ cp .env.example .env
-$ cp .env.example .env.testing
-```
-
 Gere uma nova chave para o projeto:
 
 ```bash
-$ php artisan key:generate
+$ ./vendor/bin/sail artisan key:generate
+```
+
+Execute as migrations do banco de dados:
+
+```bash
+$ ./vendor/bin/sail artisan migrate
+$ ./vendor/bin/sail artisan --env=testing migrate
 ```
 
 Acesse o projeto no seu navegador:
 
 ```bash
-http://localhost:8000
+http://localhost:80
 ```

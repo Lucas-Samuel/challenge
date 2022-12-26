@@ -53,11 +53,18 @@ class DebtControllerTest extends TestCase
         $response->assertStatus(200);
     }
 
-    // public function test_destroy()
-    // {
-    //     $debt = Debt::query()->inRandomOrder()->first();
+    public function test_destroy()
+    {
+        $debt = Debt::create([
+            'name' => fake()->name(),
+            'government_id' => fake()->numerify('###########'),
+            'email' => fake()->email(),
+            'debt_amount' => fake()->randomFloat(2, 0, 10000),
+            'debt_due_date' => fake()->dateTimeBetween('now', '+5 days')->format('Y-m-d'),
+            'debt_id' => fake()->randomNumber()
+        ]);
 
-    //     $response = $this->delete("/api/debts/{$debt->id}");
-    //     $response->assertStatus(200);
-    // }
+        $response = $this->delete("/api/debts/{$debt->id}");
+        $response->assertStatus(200);
+    }
 }

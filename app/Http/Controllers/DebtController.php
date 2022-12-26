@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Services\DebtService;
 use App\Models\Debt;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -30,7 +31,7 @@ class DebtController extends Controller
             'debts' => 'required|mimes:csv,txt',
         ]);
 
-        $debts = $this->csvToArray($validated['debts'], $request->get('delimiter'));
+        $debts = (new DebtService)->getDebtsFromCsv($validated['debts'], $request->get('delimiter'));
 
         try {
             DB::beginTransaction();
@@ -54,45 +55,6 @@ class DebtController extends Controller
             'status'    => 'success',
             'message'   => 'Successfully registered debts'
         ], 201);
-    }
-
-    function csvToArray($filename, $delimiter = null)
-    {
-        if (!file_exists($filename) || !is_readable($filename)) {
-            return false;
-        }
-
-        $handle = fopen($filename, 'r');
-        if ($handle === false) {
-            return false;
-        }
-
-        if (!$delimiter) {
-            $delimiters = [';' => 0, ',' => 0, "\t" => 0, "|" => 0];
-            $firstLine = fgets($handle);
-            rewind($handle);
-
-            foreach ($delimiters as $delimiter => &$count) {
-                $count = count(str_getcsv($firstLine, $delimiter));
-            }
-
-            $delimiter = array_search(max($delimiters), $delimiters);
-        }
-
-        $data = [];
-        $header = null;
-        while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
-            if (!$header) {
-                $header = $row;
-            } else {
-                $data[] = array_combine($header, $row);
-            }
-        }
-
-        fclose($handle);
-        unlink($filename);
-
-        return $data;
     }
 
     /**
