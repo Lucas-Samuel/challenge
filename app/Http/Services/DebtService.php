@@ -2,6 +2,7 @@
 
 namespace App\Http\Services;
 
+use App\Models\Debt;
 use Illuminate\Support\Facades\DB;
 
 class DebtService
@@ -55,5 +56,22 @@ class DebtService
         unlink($filename);
 
         return $data;
+    }
+
+    public function save($debts)
+    {
+        try {
+            DB::beginTransaction();
+
+            foreach ($debts as $debt) {
+                Debt::create($debt);
+            }
+
+            DB::commit();
+        } catch (\Illuminate\Database\QueryException $exception) {
+            DB::rollBack();
+
+            throw $exception;
+        }
     }
 }

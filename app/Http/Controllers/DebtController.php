@@ -25,31 +25,15 @@ class DebtController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(Request $request, DebtService $debtService)
     {
         $validated = $request->validate([
             'debts' => 'required|mimes:csv,txt',
         ]);
 
-        $debts = (new DebtService)->getDebtsFromCsv($validated['debts'], $request->get('delimiter'));
+        $debts = $debtService->getDebtsFromCsv($validated['debts'], $request->get('delimiter'));
 
-        try {
-            DB::beginTransaction();
-
-            foreach ($debts as $debt) {
-                Debt::create($debt);
-            }
-
-            DB::commit();
-        } catch (\Illuminate\Database\QueryException $exception) {
-            DB::rollBack();
-
-            return response()->json([
-                'status'    => 'error',
-                'message'   => 'Error registering debt',
-                'error'     => $exception->errorInfo
-            ], 400);
-        }
+        $debtService->save($debts);
 
         return response()->json([
             'status'    => 'success',

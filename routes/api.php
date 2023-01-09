@@ -18,5 +18,4 @@ use Illuminate\Support\Facades\Route;
 
 Route::apiResource('debts', DebtController::class);
 
-Route::post('/billings/generate', [BillingController::class, 'generate']);
 Route::post('/billings/notify', [BillingController::class, 'notify']);

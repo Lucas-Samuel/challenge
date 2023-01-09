@@ -5,11 +5,12 @@ namespace Tests\Feature\Http\Controllers;
 use App\Models\Billing;
 use App\Models\Debt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class BillingControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * A basic feature test example.
      *
@@ -17,22 +18,16 @@ class BillingControllerTest extends TestCase
      */
     public function test_generate()
     {
-        Debt::create([
-            'name' => fake()->name(),
-            'government_id' => fake()->numerify('###########'),
-            'email' => fake()->email(),
-            'debt_amount' => fake()->randomFloat(2, 0, 10000),
-            'debt_due_date' => fake()->dateTimeBetween('now', '+5 days')->format('Y-m-d'),
-            'debt_id' => fake()->randomNumber()
-        ]);
+        Debt::factory()->create();
 
-        $response = $this->post('/api/billings/generate');
-        $response->assertStatus(200);
+        $response = $this->artisan('billing:generate');
+        $response->assertOk();
     }
 
-    public function test_notify()
+    public function test_notify_paid()
     {
-        $debt = Debt::query()->inRandomOrder()->first();
+        $billing = Billing::factory()->create();
+        $debt = Debt::where('id', $billing->debt_id)->first();
 
         $response = $this->json('POST', '/api/billings/notify', [
             'debtId'        => $debt->id,
@@ -46,15 +41,20 @@ class BillingControllerTest extends TestCase
 
     public function test_notify_already_paid()
     {
-        $billing = Billing::where('status', Billing::PAID)->first();
+        $billing = Billing::factory()->create();
+        $debt = Debt::where('id', $billing->debt_id)->first();
 
-        $response = $this->json('POST', '/api/billings/notify', [
-            'debtId'        => $billing->debt_id,
-            'paidAt'        => $billing->paid_at,
-            'paidAmount'    => $billing->paid_amount,
-            'paidBy'        => $billing->paid_by,
-        ]);
+        $postData = [
+            'debtId'        => $debt->id,
+            'paidAt'        => fake()->dateTimeBetween('now', '+5 days')->format('Y-m-d'),
+            'paidAmount'    => $debt->debt_amount,
+            'paidBy'        => $debt->name,
+        ];
 
+        $response = $this->json('POST', '/api/billings/notify', $postData);
         $response->assertStatus(200);
+
+        $secondResponse = $this->json('POST', '/api/billings/notify', $postData);
+        $secondResponse->assertStatus(200);
     }
 }

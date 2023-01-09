@@ -4,12 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\Debt;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class DebtControllerTest extends TestCase
 {
+    use RefreshDatabase;
+
     /**
      * A basic feature test example.
      *
@@ -37,7 +38,7 @@ class DebtControllerTest extends TestCase
 
     public function test_show()
     {
-        $debt = Debt::query()->inRandomOrder()->first();
+        $debt = Debt::factory()->create();
 
         $response = $this->get("/api/debts/{$debt->id}");
         $response->assertStatus(200);
@@ -45,7 +46,8 @@ class DebtControllerTest extends TestCase
 
     public function test_update()
     {
-        $debt = Debt::query()->inRandomOrder()->first();
+        $debt = Debt::factory()->create();
+
         $debt->name = fake()->name();
         $debt->debt_amount = fake()->randomFloat(2, 0, 10000);
 
@@ -55,14 +57,7 @@ class DebtControllerTest extends TestCase
 
     public function test_destroy()
     {
-        $debt = Debt::create([
-            'name' => fake()->name(),
-            'government_id' => fake()->numerify('###########'),
-            'email' => fake()->email(),
-            'debt_amount' => fake()->randomFloat(2, 0, 10000),
-            'debt_due_date' => fake()->dateTimeBetween('now', '+5 days')->format('Y-m-d'),
-            'debt_id' => fake()->randomNumber()
-        ]);
+        $debt = Debt::factory()->create();
 
         $response = $this->delete("/api/debts/{$debt->id}");
         $response->assertStatus(200);
